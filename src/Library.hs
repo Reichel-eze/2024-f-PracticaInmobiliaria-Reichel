@@ -82,6 +82,9 @@ ubicadoEn barrios depto = barrio depto `elem` barrios
 ubicadoEn' :: [Barrio] -> (Depto -> Bool)
 ubicadoEn' barrios = (`elem` barrios) . barrio -- tambien lo podria hacer con un flip!! (el primer argumento del elem es la cosa, luego es la lista)
 
+ubicadoEn'' :: [Barrio] -> Depto -> Bool
+ubicadoEn'' barrios = (flip elem barrios). barrio
+
 -- 2.b) cumpleRango que a partir de una función y dos números, indique si el valor retornado por la función al ser 
 -- aplicada con el departamento se encuentra entre los dos valores indicados.
 
