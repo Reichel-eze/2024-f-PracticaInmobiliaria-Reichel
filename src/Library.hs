@@ -77,15 +77,64 @@ ejemploDeOrdenarSegun = ordenarSegun (menor length) ["1", "esteVaASerElTercero",
 ubicadoEn :: [Barrio] -> Depto -> Bool
 ubicadoEn barrios depto = barrio depto `elem` barrios  
 
+-- La mas linda (que aplico composicion, es esta)
 -- 1ero. Obtengo el barrio
 -- 2dos. Averiguo si esta en la lista de barrios
-ubicadoEn' :: [Barrio] -> (Depto -> Bool)
+ubicadoEn' :: [Barrio] -> Requisito
 ubicadoEn' barrios = (`elem` barrios) . barrio -- tambien lo podria hacer con un flip!! (el primer argumento del elem es la cosa, luego es la lista)
 
 ubicadoEn'' :: [Barrio] -> Depto -> Bool
 ubicadoEn'' barrios = (flip elem barrios). barrio
 
--- 2.b) cumpleRango que a partir de una función y dos números, indique si el valor retornado por la función al ser 
+-- 2.b) Definir cumpleRango que a partir de una función y dos números, indique si el valor retornado por la función al ser 
 -- aplicada con el departamento se encuentra entre los dos valores indicados.
 
+-- Me estoy fijando si el resultado de haber aplicado f al departamento se encuentra entre las cotas
+cumpleRango :: Ord a => (Depto -> a) -> a -> a -> (Depto -> Bool)
+cumpleRango f cotaInferior cotaSuperior = between cotaInferior cotaSuperior . f 
 
+cumpleRango' :: Ord a => (Depto -> a) -> a -> a -> Requisito
+cumpleRango' f cotaInferior cotaSuperior depto = (between cotaInferior cotaSuperior . f) depto 
+
+-- 3.a) Definir la función cumpleBusqueda que se cumple si todos los requisitos de una búsqueda se 
+-- verifican para un departamento dado.
+
+-- Recordar: Requisito :: Depto -> Bool
+-- El all recibe una lista de requisitos y retorna un booleano
+cumpleBusqueda :: Depto -> (Busqueda -> Bool)
+cumpleBusqueda depto requisitos = all (\requisito -> requisito depto) requisitos
+
+cumpleBusqueda' :: Depto -> (Busqueda -> Bool)
+cumpleBusqueda' depto = all ($ depto) 
+
+-- 3.b) Definir la función buscar que a partir de una búsqueda, un criterio de ordenamiento y una lista de departamentos 
+-- retorne todos aquellos que cumplen con la búsqueda ordenados en base al criterio recibido.
+
+-- 1ero. Filtro los departamentos segun los cumplen la busqueda
+-- 2dos. Ordeno los departamentos segun un criterio
+
+buscar :: Busqueda -> (Depto -> Depto -> Bool) -> ([Depto] -> [Depto])
+buscar busqueda criterio departamentos = (ordenarSegun criterio . filter (flip cumpleBusqueda busqueda)) departamentos
+
+-- 3.c) Mostrar un ejemplo de uso de buscar para obtener los departamentos de ejemplo, ordenado por mayor superficie, 
+-- que cumplan con:
+-- x Encontrarse en Recoleta o Palermo
+-- x Ser de 1 o 2 ambientes
+-- x Alquilarse a menos de $6000 por mes
+
+ejemploDeBuscar1 = buscar [
+    ubicadoEn' ["Recoleta" , "Palermo"], 
+    cumpleRango ambientes 1 2, 
+    cumpleRango precio 0 6000,
+    (>100) . superficie   -- una inventadita (que la superficie sea mayor que 100)
+    ] (mayor superficie) deptosDeEjemplo
+
+-- 4) Definir la función mailsDePersonasInteresadas que a partir de un departamento y una lista de personas retorne 
+-- los mails de las personas que tienen alguna búsqueda que se cumpla para el departamento dado.
+
+-- 1ero. Busco si hay alguna busqueda dentro de las busquedas de una persona que cumple con la busqueda del depto
+-- 2dos. Filtro aquellas personas que tengas alguna busqueda que se cumpla para el depto
+-- 3ero. Hago una lista de los mails de aquellas personas
+
+mailsDePersonasInteresadas :: Depto -> ([Persona] -> [Mail])
+mailsDePersonasInteresadas depto personas = (map mail . filter (any (cumpleBusqueda depto) . busquedas)) personas
